@@ -1,5 +1,7 @@
 require "io/console"
 require "byebug"
+require_relative "board"
+require "colorize"
 
 KEYMAP = {
   " " => :space,
@@ -24,12 +26,12 @@ KEYMAP = {
   "\u0003" => :ctrl_c,
 }
 
-MOVES = {
-  left: [0, -1],
-  right: [0, 1],
-  up: [-1, 0],
-  down: [1, 0]
-}
+  MOVES = {
+    left: [0, -1],
+    right: [0, 1],
+    up: [-1, 0],
+    down: [1, 0]
+  }
 
 class Cursor
 
@@ -44,6 +46,54 @@ class Cursor
     key = KEYMAP[read_char]
     handle_key(key)
   end
+
+
+  def handle_key(key)
+      # debugger
+      if key == "\r" || key == " "
+          p @cursor_pos
+      elsif key == "\u0003"
+          Process.exit(status = 0)
+      else 
+          KEYMAP.each do |k, v|
+              if key == k
+                  output = v
+                  MOVES.each do |ele|
+                      if ele == output
+                          new_cursor_x = cursor_pos[0] + ele[0]
+                          new_cursor_y = cursor_pos[1] + ele[1]
+                          cursor_pos = [new_cursor_x, new_cursor_y]
+                          update_pos([0, 0])
+                      end
+                  end
+              end
+          end
+      end
+  end
+
+  def update_pos(diff)
+        x, y = diff
+        new_x = cursor_pos[0] + x
+        new_y = cursor_pos[1] + y 
+        if new_x >=0 && new_x <= 7 && new_y >=0 && new_y <= 7
+            # cursor_pos = [new_x, new_y]
+            @board.board.each_with_index do |row, i|
+                str = ""
+                row.each_with_index do |square, j|
+                
+                    if @board[[new_x, new_y]] != @board[[i, j]]
+                        str += @board[[i, j]].to_s.colorize(:blue)
+                    else
+                        str += @board[[i, j]].to_s.colorize(:red)
+                    end
+                end
+                puts str
+                puts "\n"
+            end
+        end
+    end
+  end
+
 
   private
 
@@ -76,43 +126,6 @@ class Cursor
     return input
   end
 
-    def handle_key(key)
-        debugger
-        if key == "\r" || key == " "
-            p @cursor_pos
-        elsif key == "\u0003"
-            Process.exit(status = 0)
-        else 
-            KEYMAP.each do |k, v|
-                if key == k
-                    output = v
-                    MOVES.each do |ele|
-                        if ele == output
-                            new_cursor_x = cursor_pos[0] + ele[0]
-                            new_cursor_y = cursor_pos[1] + ele[1]
-                            cursor_pos = [new_cursor_x, new_cursor_y]
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-  def update_pos(diff)
-        x, y = diff
-        new_x = cursor_pos[0] + x
-        new_y = cursor_pos[1] + y 
-        if new_x >=0 && new_x <= 7 && new_y >=0 && new_y <= 7
-            cursor_pos = [new_x, new_y]
-            @board.each do |row|
-                row.to_s.each_char do |square|
-                    if square != cursor_pos
-                        square.colorize(:blue)
-                    else
-                        square.colorize(:red)
-                    end
-                end
-            end
-        end
-    end
-end
+board_c = Board.new
+cursor = Cursor.new([0,0], board_c)
+cursor.handle_key("a")
